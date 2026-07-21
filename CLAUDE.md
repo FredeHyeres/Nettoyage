@@ -40,6 +40,7 @@ NettoyageDoublons()                    ' .bas : entree + globals
       |         +-- CSignatureCourbe   '   curves, bsplines
       |         +-- CSignatureForme    '   shapes, complex strings/shapes
       |         +-- CSignatureCell     '   cellules, dimensions, multilignes
+      |         (CSignature* deleguent le formatage a MFormatSig.bas)
       |
       +--- frmNettoyage                ' modeless, controles au runtime
 ```
@@ -54,6 +55,7 @@ Key-in MicroStation : `vba run [NettoyageDoublonsV1]NettoyageDoublons`
 src/
   NettoyageDoublonsV1.bas   - Module principal
   CSettings.cls             - Parametres
+  MFormatSig.bas            - Formatage partage des signatures (FmtD/FormatPt/BoolStr)
   CSignatureLigne.cls       - Signature lignes
   CSignatureTexte.cls       - Signature textes
   CSignatureArc.cls         - Signature arcs/ellipses

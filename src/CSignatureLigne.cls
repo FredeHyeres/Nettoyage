@@ -12,6 +12,7 @@ Option Explicit
 ' =============================================================================
 ' CSignatureLigne - Calcul de signature pour lignes et linestrings
 ' Gere : msdElementTypeLine, msdElementTypeLineString, msdElementTypePointString
+' Formatage delegue au module partage MFormatSig.
 ' =============================================================================
 
 Private m_dTol As Double
@@ -21,9 +22,12 @@ Sub Init(ByVal dTolerance As Double)
 End Sub
 
 Function SignatureLigne(ByVal oLine As LineElement) As String
-    Dim s As String
-    s = FormatPt(oLine.StartPoint) & ">" & FormatPt(oLine.EndPoint)
-    SignatureLigne = s
+    ' StartPoint/EndPoint sont propres a ArcElement : sur une ligne on prend les
+    ' extremites via GetVertices (voie confirmee).
+    Dim pts() As Point3d
+    pts = oLine.GetVertices
+    SignatureLigne = MFormatSig.FormatPt(pts(LBound(pts)), m_dTol) & ">" & _
+                     MFormatSig.FormatPt(pts(UBound(pts)), m_dTol)
 End Function
 
 Function SignatureLineString(ByVal oLine As LineElement) As String
@@ -34,21 +38,11 @@ Function SignatureLineString(ByVal oLine As LineElement) As String
     pts = oLine.GetVertices
     s = CStr(UBound(pts) - LBound(pts) + 1) & "V|"
     For i = LBound(pts) To UBound(pts)
-        s = s & FormatPt(pts(i)) & ";"
+        s = s & MFormatSig.FormatPt(pts(i), m_dTol) & ";"
     Next i
     SignatureLineString = s
 End Function
 
 Function SignaturePointString(ByVal oLine As LineElement) As String
     SignaturePointString = SignatureLineString(oLine)
-End Function
-
-' --- Utilitaires prives ---
-
-Private Function FormatPt(ByRef pt As Point3d) As String
-    FormatPt = FmtD(pt.X) & "," & FmtD(pt.Y) & "," & FmtD(pt.Z)
-End Function
-
-Private Function FmtD(ByVal d As Double) As String
-    FmtD = Format$(Round(d / m_dTol) * m_dTol, "0.0000")
 End Function

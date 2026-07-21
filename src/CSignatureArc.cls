@@ -12,6 +12,7 @@ Option Explicit
 ' =============================================================================
 ' CSignatureArc - Calcul de signature pour arcs et ellipses
 ' Gere : msdElementTypeArc, msdElementTypeEllipse
+' Formatage delegue au module partage MFormatSig.
 ' =============================================================================
 
 Private m_dTol As Double
@@ -22,34 +23,20 @@ End Sub
 
 Function SignatureArc(ByVal oArc As ArcElement) As String
     Dim s As String
-    s = FormatPt(oArc.CenterPoint) & "|"
-    s = s & FmtD(oArc.PrimaryRadius) & "|"
-    s = s & FmtD(oArc.SecondaryRadius) & "|"
-    s = s & FmtD(oArc.StartAngle) & "|"
-    s = s & FmtD(oArc.SweepAngle) & "|"
-    s = s & FmtD(oArc.Rotation)
+    s = MFormatSig.FormatPt(oArc.CenterPoint, m_dTol) & "|"
+    s = s & MFormatSig.FmtD(oArc.PrimaryRadius, m_dTol) & "|"
+    s = s & MFormatSig.FmtD(oArc.SecondaryRadius, m_dTol) & "|"
+    s = s & MFormatSig.FmtD(oArc.StartAngle, m_dTol) & "|"
+    s = s & MFormatSig.FmtD(oArc.SweepAngle, m_dTol) & "|"
+    s = s & MFormatSig.FmtRot(oArc.Rotation, m_dTol)
     SignatureArc = s
 End Function
 
 Function SignatureEllipse(ByVal oEllipse As EllipseElement) As String
     Dim s As String
-    s = FormatPt(oEllipse.CenterPoint) & "|"
-    s = s & FmtD(oEllipse.PrimaryRadius) & "|"
-    s = s & FmtD(oEllipse.SecondaryRadius) & "|"
-    s = s & BoolStr(oEllipse.IsFilled)
+    s = MFormatSig.FormatPt(oEllipse.CenterPoint, m_dTol) & "|"
+    s = s & MFormatSig.FmtD(oEllipse.PrimaryRadius, m_dTol) & "|"
+    s = s & MFormatSig.FmtD(oEllipse.SecondaryRadius, m_dTol) & "|"
+    s = s & MFormatSig.BoolStr(oEllipse.IsFilled)
     SignatureEllipse = s
-End Function
-
-' --- Utilitaires prives ---
-
-Private Function FormatPt(ByRef pt As Point3d) As String
-    FormatPt = FmtD(pt.X) & "," & FmtD(pt.Y) & "," & FmtD(pt.Z)
-End Function
-
-Private Function FmtD(ByVal d As Double) As String
-    FmtD = Format$(Round(d / m_dTol) * m_dTol, "0.0000")
-End Function
-
-Private Function BoolStr(ByVal b As Boolean) As String
-    If b Then BoolStr = "T" Else BoolStr = "F"
 End Function

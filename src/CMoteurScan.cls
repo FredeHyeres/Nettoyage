@@ -26,6 +26,7 @@ Private m_oSigCell      As CSignatureCell
 ' --- Resultats ---
 Private m_lNbScannes    As Long
 Private m_lNbTraites    As Long
+Private m_lNbIgnores    As Long
 Private m_lNbDoublons   As Long
 Private m_lNbSupprimes  As Long
 Private m_aDoublons()   As DLong
@@ -48,6 +49,12 @@ End Property
 
 Public Property Get NbSupprimes() As Long
     NbSupprimes = m_lNbSupprimes
+End Property
+
+' Elements scannes dont la signature etait vide (type non gere ou erreur
+' d'extraction avalee) : exclus de la detection. Utile au diagnostic.
+Public Property Get NbIgnores() As Long
+    NbIgnores = m_lNbIgnores
 End Property
 
 ' --- Initialisation des classes de signature ---
@@ -88,6 +95,7 @@ Sub Analyser(ByVal oModel As ModelReference, ByVal oSettings As CSettings)
 
     m_lNbScannes = 0
     m_lNbTraites = 0
+    m_lNbIgnores = 0
     m_lNbDoublons = 0
     m_lNbSupprimes = 0
     m_lCountDoub = 0
@@ -121,6 +129,10 @@ Sub Analyser(ByVal oModel As ModelReference, ByVal oSettings As CSettings)
                 Else
                     m_dictSigs.Add sSig, oElement.ID
                 End If
+            Else
+                ' Signature vide : type non gere ou erreur d'extraction avalee
+                ' par le On Error de SignatureGeometrique -> element ignore.
+                m_lNbIgnores = m_lNbIgnores + 1
             End If
         End If
 
@@ -132,7 +144,7 @@ Sub Analyser(ByVal oModel As ModelReference, ByVal oSettings As CSettings)
     Loop
 
     ShowPrompt "Analyse terminee: " & m_lNbDoublons & " doublons sur " & _
-               m_lNbScannes & " elements."
+               m_lNbScannes & " elements (" & m_lNbIgnores & " ignores)."
 End Sub
 
 ' =============================================================================
@@ -147,6 +159,7 @@ Sub SupprimerDoublons(ByVal oModel As ModelReference)
 
     For i = 0 To m_lCountDoub - 1
         On Error Resume Next
+        Set oElem = Nothing
         Set oElem = oModel.GetElementByID(m_aDoublons(i))
         If Not oElem Is Nothing Then
             oModel.RemoveElement oElem
@@ -177,6 +190,7 @@ Sub SurlignierDoublons(ByVal oModel As ModelReference)
 
     For i = 0 To m_lCountDoub - 1
         On Error Resume Next
+        Set oElem = Nothing
         Set oElem = oModel.GetElementByID(m_aDoublons(i))
         If Not oElem Is Nothing Then
             oModel.SelectElement oElem

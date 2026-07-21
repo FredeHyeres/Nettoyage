@@ -13,6 +13,7 @@ Option Explicit
 ' CSignatureForme - Calcul de signature pour shapes et complex strings/shapes
 ' Gere : msdElementTypeShape, msdElementTypeComplexString,
 '         msdElementTypeComplexShape
+' Formatage delegue au module partage MFormatSig.
 ' =============================================================================
 
 Private m_dTol As Double
@@ -28,9 +29,9 @@ Function SignatureShape(ByVal oShape As ShapeElement) As String
 
     pts = oShape.GetVertices
     s = CStr(UBound(pts) - LBound(pts) + 1) & "V|"
-    s = s & BoolStr(oShape.IsFilled) & "|"
+    s = s & MFormatSig.BoolStr(oShape.IsFilled) & "|"
     For i = LBound(pts) To UBound(pts)
-        s = s & FormatPt(pts(i)) & ";"
+        s = s & MFormatSig.FormatPt(pts(i), m_dTol) & ";"
     Next i
     SignatureShape = s
 End Function
@@ -70,7 +71,7 @@ Function SignatureComplexShape(ByVal oComplex As ComplexShapeElement) As String
         s = s & SignatureSousElement(oSub) & "#"
     Loop
 
-    SignatureComplexShape = BoolStr(oComplex.IsFilled) & "|" & CStr(lCount) & "S|" & s
+    SignatureComplexShape = MFormatSig.BoolStr(oComplex.IsFilled) & "|" & CStr(lCount) & "S|" & s
 End Function
 
 ' --- Signature simplifiee d'un sous-element (sans recurse infinie) ---
@@ -80,20 +81,6 @@ Private Function SignatureSousElement(ByVal oSub As Element) As String
 
     s = CStr(oSub.Type) & ":"
     oRange = oSub.Range
-    s = s & FormatPt(oRange.Low) & ">" & FormatPt(oRange.High)
+    s = s & MFormatSig.FormatPt(oRange.Low, m_dTol) & ">" & MFormatSig.FormatPt(oRange.High, m_dTol)
     SignatureSousElement = s
-End Function
-
-' --- Utilitaires prives ---
-
-Private Function FormatPt(ByRef pt As Point3d) As String
-    FormatPt = FmtD(pt.X) & "," & FmtD(pt.Y) & "," & FmtD(pt.Z)
-End Function
-
-Private Function FmtD(ByVal d As Double) As String
-    FmtD = Format$(Round(d / m_dTol) * m_dTol, "0.0000")
-End Function
-
-Private Function BoolStr(ByVal b As Boolean) As String
-    If b Then BoolStr = "T" Else BoolStr = "F"
 End Function

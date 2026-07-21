@@ -13,6 +13,7 @@ Option Explicit
 ' CSignatureCourbe - Calcul de signature pour courbes et B-splines
 ' Gere : msdElementTypeCurve, msdElementTypeBsplineCurve,
 '         msdElementTypeBsplineSurface
+' Formatage delegue au module partage MFormatSig.
 ' =============================================================================
 
 Private m_dTol As Double
@@ -29,30 +30,34 @@ Function SignatureCurve(ByVal oCurve As CurveElement) As String
     pts = oCurve.GetVertices
     s = CStr(UBound(pts) - LBound(pts) + 1) & "V|"
     For i = LBound(pts) To UBound(pts)
-        s = s & FormatPt(pts(i)) & ";"
+        s = s & MFormatSig.FormatPt(pts(i), m_dTol) & ";"
     Next i
     SignatureCurve = s
 End Function
 
 Function SignatureBSplineCurve(ByVal oBSC As BsplineCurveElement) As String
+    ' Order/GetPoles/GetKnots sont sur l'objet geometrie BsplineCurve, pas sur
+    ' l'element : on l'extrait d'abord. Le flag "closed" n'a pas de propriete
+    ' dediee et reste implicite dans les noeuds/poles -> non necessaire ici.
     Dim s As String
+    Dim oBc As BsplineCurve
     Dim pts() As Point3d
     Dim knots() As Double
     Dim i As Long
 
-    pts = oBSC.GetPoles
-    s = CStr(oBSC.Order) & "|"
-    s = s & BoolStr(oBSC.IsClosed) & "|"
-    s = s & CStr(UBound(pts) - LBound(pts) + 1) & "P|"
+    Set oBc = oBSC.ExtractBsplineCurve
 
+    s = CStr(oBc.Order) & "|"
+    pts = oBc.GetPoles
+    s = s & CStr(UBound(pts) - LBound(pts) + 1) & "P|"
     For i = LBound(pts) To UBound(pts)
-        s = s & FormatPt(pts(i)) & ";"
+        s = s & MFormatSig.FormatPt(pts(i), m_dTol) & ";"
     Next i
 
-    knots = oBSC.GetKnots
+    knots = oBc.GetKnots
     s = s & CStr(UBound(knots) - LBound(knots) + 1) & "K|"
     For i = LBound(knots) To UBound(knots)
-        s = s & FmtD(knots(i)) & ";"
+        s = s & MFormatSig.FmtD(knots(i), m_dTol) & ";"
     Next i
 
     SignatureBSplineCurve = s
@@ -64,21 +69,7 @@ Function SignatureBSplineSurface(ByVal oElement As Element) As String
 
     oRange = oElement.Range
     s = "BSURF|"
-    s = s & FormatPt(oRange.Low) & "|"
-    s = s & FormatPt(oRange.High)
+    s = s & MFormatSig.FormatPt(oRange.Low, m_dTol) & "|"
+    s = s & MFormatSig.FormatPt(oRange.High, m_dTol)
     SignatureBSplineSurface = s
-End Function
-
-' --- Utilitaires prives ---
-
-Private Function FormatPt(ByRef pt As Point3d) As String
-    FormatPt = FmtD(pt.X) & "," & FmtD(pt.Y) & "," & FmtD(pt.Z)
-End Function
-
-Private Function FmtD(ByVal d As Double) As String
-    FmtD = Format$(Round(d / m_dTol) * m_dTol, "0.0000")
-End Function
-
-Private Function BoolStr(ByVal b As Boolean) As String
-    If b Then BoolStr = "T" Else BoolStr = "F"
 End Function

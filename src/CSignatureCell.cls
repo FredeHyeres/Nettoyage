@@ -13,6 +13,7 @@ Option Explicit
 ' CSignatureCell - Calcul de signature pour cellules, dimensions, multilignes
 ' Gere : msdElementTypeCellHeader, msdElementTypeDimension,
 '         msdElementTypeMultiLine
+' Formatage delegue au module partage MFormatSig.
 ' =============================================================================
 
 Private m_dTol As Double
@@ -22,13 +23,13 @@ Sub Init(ByVal dTolerance As Double)
 End Sub
 
 Function SignatureCell(ByVal oCell As CellElement) As String
+    ' ScaleX/Y/Z n'existent pas : l'echelle est un Point3d (oCell.Scale).
+    ' Rotation est une Matrix3d (serialisee par FmtRot, pas traitee en Double).
     Dim s As String
     s = oCell.Name & "|"
-    s = s & FormatPt(oCell.Origin) & "|"
-    s = s & FmtD(oCell.Rotation) & "|"
-    s = s & FmtD(oCell.ScaleX) & "|"
-    s = s & FmtD(oCell.ScaleY) & "|"
-    s = s & FmtD(oCell.ScaleZ)
+    s = s & MFormatSig.FormatPt(oCell.Origin, m_dTol) & "|"
+    s = s & MFormatSig.FmtRot(oCell.Rotation, m_dTol) & "|"
+    s = s & MFormatSig.FormatPt(oCell.Scale, m_dTol)
     SignatureCell = s
 End Function
 
@@ -37,8 +38,8 @@ Function SignatureDimension(ByVal oDim As DimensionElement) As String
     Dim oRange As Range3d
 
     oRange = oDim.Range
-    s = FormatPt(oRange.Low) & "|"
-    s = s & FormatPt(oRange.High) & "|"
+    s = MFormatSig.FormatPt(oRange.Low, m_dTol) & "|"
+    s = s & MFormatSig.FormatPt(oRange.High, m_dTol) & "|"
 
     On Error Resume Next
     s = s & oDim.Text
@@ -55,22 +56,8 @@ Function SignatureMultiLine(ByVal oML As MultiLineElement) As String
     pts = oML.GetVertices
     s = CStr(UBound(pts) - LBound(pts) + 1) & "V|"
     For i = LBound(pts) To UBound(pts)
-        s = s & FormatPt(pts(i)) & ";"
+        s = s & MFormatSig.FormatPt(pts(i), m_dTol) & ";"
     Next i
-    s = s & BoolStr(oML.IsClosed)
+    s = s & MFormatSig.BoolStr(oML.IsClosed)
     SignatureMultiLine = s
-End Function
-
-' --- Utilitaires prives ---
-
-Private Function FormatPt(ByRef pt As Point3d) As String
-    FormatPt = FmtD(pt.X) & "," & FmtD(pt.Y) & "," & FmtD(pt.Z)
-End Function
-
-Private Function FmtD(ByVal d As Double) As String
-    FmtD = Format$(Round(d / m_dTol) * m_dTol, "0.0000")
-End Function
-
-Private Function BoolStr(ByVal b As Boolean) As String
-    If b Then BoolStr = "T" Else BoolStr = "F"
 End Function
